@@ -7,21 +7,28 @@ namespace ConsultorioOdontologico
     {
         private List<Paciente> pacientes;
         private List<Consulta> consultas;
+        private bool listaConsultasFoiModificada;
         
         public IReadOnlyCollection<Paciente> PacientesReadOnly
         {
             get { return pacientes.AsReadOnly(); }
         }
 
+        public IReadOnlyCollection<Consulta> ConsultasReadOnly
+        {
+            get { return consultas.AsReadOnly(); }
+        }
+
         public Persistencia()
         {
             pacientes = new List<Paciente>();
             consultas = new List<Consulta>();
+            listaConsultasFoiModificada = false;
         }
 
         public bool SalvarPaciente(Paciente p)
         {
-            if (cpfNaoExiste(p)) { 
+            if (CpfNaoExiste(p)) { 
                 pacientes.Add(p);
                 return true;
                 
@@ -30,17 +37,17 @@ namespace ConsultorioOdontologico
             return false;
         }
 
-        public bool cpfNaoExiste(Paciente p) { 
+        public bool CpfNaoExiste(Paciente p) { 
             
             return !pacientes.Contains(p)? true : throw new PacienteJaExisteException();
         }
 
-        public bool cpfExiste(Paciente p) {
+        public bool CpfExiste(Paciente p) {
             return pacientes.Contains(p) ? true : throw new PacienteNaoExisteException();
 
         }
 
-        public bool salvarConsulta(Consulta c) {
+        public bool SalvarConsulta(Consulta c) {
             Paciente? pSalvo = pacientes.Find((p) => p.Equals(c.Paciente));
 
             if (pSalvo == null)
@@ -55,11 +62,38 @@ namespace ConsultorioOdontologico
 
             pSalvo.Consultas.Add(c);
             consultas.Add(c);
+            listaConsultasFoiModificada = true;
 
             return true;
         }
 
-        public Paciente pegarPaciente(string cpf)
+        public IReadOnlyCollection<Consulta> PegarConsultas()
+        {
+            if (listaConsultasFoiModificada)
+            {
+                    consultas.Sort();
+                    listaConsultasFoiModificada = false;
+            }
+
+            return ConsultasReadOnly;
+            
+        }
+
+        public IReadOnlyCollection<Consulta> PegarConsultasPorPeriodo(DateTime inicio, DateTime fim)
+        {
+            if (listaConsultasFoiModificada)
+            {
+                consultas.Sort();
+                listaConsultasFoiModificada = false;
+            }
+
+
+
+            return consultas.Where((c) => c.DataConsulta >= inicio && c.DataConsulta <= fim).ToList().AsReadOnly() ;
+
+        }
+
+        public Paciente PegarPaciente(string cpf)
         {
             Paciente? pSalvo = pacientes.Find((p) => p.CPF == cpf);
             if (pSalvo == null)

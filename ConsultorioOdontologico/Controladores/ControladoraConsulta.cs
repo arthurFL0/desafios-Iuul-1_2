@@ -11,12 +11,26 @@ namespace ConsultorioOdontologico.Controladores
             this.persistencia = persistencia;
         }
 
-        public bool CadastrarConsulta(Consulta c)
+        public bool CadastrarConsulta(Paciente p, string data, string horaInicial, string horaFinal, out Dictionary<string, List<String>> listaErros)
         {
-            if (persistencia.salvarConsulta(c))
-                return true;
+            Consulta c = new Consulta(p, data, horaInicial, horaFinal);
+            listaErros = c.ValidarDados();
+            if (listaErros.Count > 0)
+                return false;
 
-            return false;
+
+           return persistencia.SalvarConsulta(c);
+            
+        }
+
+        public IReadOnlyCollection<Consulta> PegarConsultas()
+        {
+            return persistencia.PegarConsultas();
+        }
+
+        public IReadOnlyCollection<Consulta> PegarConsultasPorPeriodo(string dataInicio, string dataFim)
+        {
+            return persistencia.PegarConsultasPorPeriodo(DateTime.Parse(dataInicio),DateTime.Parse(dataFim));
         }
     }
 }

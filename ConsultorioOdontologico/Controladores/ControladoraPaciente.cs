@@ -11,23 +11,27 @@ namespace ConsultorioOdontologico.Controladores
             persistencia = p;
         }
 
-        public bool CadastrarPaciente(Paciente p)
+        public bool CadastrarPaciente(string cpf, string nome, string data,out Dictionary<string,string> listaErros)
         {
-            if (persistencia.SalvarPaciente(p))
-                return true;
 
-            return false;
+            Paciente p = new Paciente (cpf, nome, data);
+            listaErros = p.ValidarDados();
+            if (listaErros.Count > 0)
+                return false;
+            
+
+            return persistencia.SalvarPaciente(p);
         }
 
         public bool VerificaCPF(string cpf, bool deveExistir)
         {
-            Paciente p = new Paciente(cpf, "", new DateTime(2000, 01, 01));
-            return deveExistir ? persistencia.cpfExiste(p) : persistencia.cpfNaoExiste(p);
+            Paciente p = new Paciente(cpf, "", "");
+            return deveExistir ? persistencia.CpfExiste(p) : persistencia.CpfNaoExiste(p);
         }
 
         public Paciente PegarPaciente(string cpf)
         {
-            return persistencia.pegarPaciente(cpf);
+            return persistencia.PegarPaciente(cpf);
         }
 
     }

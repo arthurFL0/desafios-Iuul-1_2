@@ -1,8 +1,6 @@
-﻿using System.Globalization;
-using System.Text.RegularExpressions;
-using ConsultorioOdontologico.Controladores;
-using ConsultorioOdontologico.Extensoes;
+﻿using ConsultorioOdontologico.Controladores;
 using ConsultorioOdontologico.Model;
+using System.Text.RegularExpressions;
 using static System.Console;
 
 
@@ -10,10 +8,10 @@ namespace ConsultorioOdontologico
 {
     internal class InterfaceConsole
     {
-         ControladoraPaciente ControladoraP {  get; }
-         ControladoraConsulta ControladoraConsulta { get; }
+        ControladoraPaciente ControladoraP { get; }
+        ControladoraConsulta ControladoraConsulta { get; }
 
-        public InterfaceConsole (ControladoraPaciente cp,ControladoraConsulta cc)
+        public InterfaceConsole(ControladoraPaciente cp, ControladoraConsulta cc)
         {
             ControladoraP = cp;
             ControladoraConsulta = cc;
@@ -28,7 +26,7 @@ namespace ConsultorioOdontologico
                 WriteLine("1-Cadastro de Pacientes\n2-Agenda\n3-Fim");
                 var op = ReadLine();
 
-                if(op == "1")
+                if (op == "1")
                 {
                     do
                     {
@@ -41,17 +39,17 @@ namespace ConsultorioOdontologico
                         switch (op2)
                         {
                             case "1": Cadastrar();
-                                    break;
+                                break;
                             case "2": ExcluirPaciente();
-                                    break;
+                                break;
                             case "3": ListarPacientes("cpf");
-                                    break;
+                                break;
                             case "4": ListarPacientes("nome");
-                                    break;
+                                break;
                             case "5": break;
-                            default: 
-                                    WriteLine("Insira uma das opções listadas");
-                                    break;
+                            default:
+                                WriteLine("Insira uma das opções listadas");
+                                break;
                         }
 
                         if (op2 == "5")
@@ -59,7 +57,7 @@ namespace ConsultorioOdontologico
 
                     } while (true);
                 }
-                else if(op == "2")
+                else if (op == "2")
                 {
                     do
                     {
@@ -90,9 +88,9 @@ namespace ConsultorioOdontologico
                         if (op3 == "4")
                             break;
 
-                    } while (true);       
+                    } while (true);
                 }
-                else if(op == "3")
+                else if (op == "3")
                 {
                     break;
                 }
@@ -104,71 +102,43 @@ namespace ConsultorioOdontologico
 
         private void Cadastrar()
         {
-            string cpf,nome;
-            DateTime dataNascimento;
+            string cpf, nome, data;
 
-            LerCPF(out cpf,false);
+            LerCPF(out cpf, false);
+
+            nome = LerString("Nome: ");
+            data = LerString("Data de nascimento: ");
 
             do
             {
-                Write("Nome: ");
-                nome = ReadLine() ?? "";
-                nome.Trim();
-
-                if (nome.Length >= 5)
+                Dictionary<string, string> listaErros;
+                if (ControladoraP.CadastrarPaciente(cpf, nome, data, out listaErros))
+                {
+                    WriteLine("Paciente cadastrado com sucesso!");
                     break;
+                };
 
-                WriteLine("Erro: Nome precisa ter pelo menos 5 caracteres.");
-            } while (true);
-
-            do
-            {
-                Write("Data de Nascimento: ");
-                string data = ReadLine() ?? "";
-                data.Trim();
-                DateTime trezeAnos = DateTime.Now.AddYears(-13);
-
-                // A Barra invertida \ que é usada para escapar / no Regex precisa ser escapada em C# com ela mesma \\
-                // entao \/ = \\/ em C#
-
-                // Ao usar @ antes da string o compilador entende que é para ignorar isso e o escape torna-se desnecessário
-
-                Match m = Regex.Match(data, @"^([0][1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/([0-9]{4})$");
-
-                if (!m.Success)
+                foreach (var erro in listaErros)
                 {
-                    WriteLine("Erro: Data não corresponde ao formato DD/MM/YYYY");
-                    continue;
+                    switch (erro.Key) {
+
+                        case "Nome":
+                            WriteLine(erro.Value);
+                            nome = LerString("Nome: ");
+                            break;
+                        case "CPF":
+                            WriteLine(erro.Value);
+                            LerCPF(out cpf, false);
+                            break;
+                        case "DataNascimento":
+                            WriteLine(erro.Value);
+                            data = LerString("Data de nascimento: ");
+                            break;
+                    }
                 }
 
-                DateTime.TryParse(data, out dataNascimento);
 
-
-                if (dataNascimento > trezeAnos)
-                {
-                    WriteLine("Erro: Paciente precisa ter mais de treze anos");
-                    continue;
-                }
-
-                break;
-
-       
             } while (true);
-
-            try
-            {
-                Paciente p = new Paciente(cpf, nome, dataNascimento);
-                ControladoraP.CadastrarPaciente(p);
-            }
-            catch (Exception ex)
-            {
-
-                WriteLine(ex.Message);
-                Cadastrar();
-            }
-
-            WriteLine("Paciente cadastrado com sucesso!");
-
 
         }
 
@@ -182,114 +152,79 @@ namespace ConsultorioOdontologico
 
         }
 
+        
         private void Agendar()
         {
-            string cpf;
-            DateTime dataConsulta, horaInicial, horaFinal;
-            DateTime aberturaConsultorio = InformacaoConsultorio.HoraAbertura;
-            DateTime encerramentoConsultorio = InformacaoConsultorio.HoraEncerramento;
+            string cpf, data, horaInicial, horaFinal;
+         
 
-            LerCPF(out cpf,true);
-
-            do
-            {
-                Write("Data da consulta: ");
-                string data = ReadLine() ?? "";
-                data.Trim();
-
-                Match m = Regex.Match(data, @"^([0][1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/([0-9]{4})$");
-
-                if (!m.Success)
-                {
-                    WriteLine("Erro: Data não corresponde ao formato DD/MM/YYYY");
-                    continue;
-                }
-
-                DateTime.TryParse(data, out dataConsulta);
-
-                break;
-
-            } while (true);
+            LerCPF(out cpf, true);
+            data = LerString("Data da consulta: ");
+            horaInicial = LerString("Hora Inicial: ");
+            horaFinal = LerString("Hora Final: ");
 
             do
             {
-                Write("Hora inicial: ");
-                string horaI = ReadLine() ?? "";
-                horaI.Trim();
-
-                Match m = Regex.Match(horaI, @"^(([0-1]?[0-9])|2[0-3])(00|15|30|45)$");
-
-                if (!m.Success)
+                try
                 {
-                    WriteLine("Erro: Hora não corresponde ao formato HHmm ou não respeita o intervalo de 15 minutos");
-                    continue;
+                    Dictionary<string, List<string>> listaErros;
+                    Paciente p = ControladoraP.PegarPaciente(cpf);
+                    bool temErroHoraInicial = false;
+                    if(ControladoraConsulta.CadastrarConsulta(p, data, horaInicial, horaFinal, out listaErros))
+                    {
+                        WriteLine("Agendamento realizado com sucesso!");
+                        break;
+
+                    }
+
+                foreach (var erro in listaErros)
+                    {
+                        switch (erro.Key)
+                        {
+
+                            case "data":
+                                foreach(var msg in erro.Value)
+                                    WriteLine(msg);
+                                data = LerString("Data da consulta: ");
+                                break;
+                            case "horaInicial":
+                                temErroHoraInicial = true;
+                                foreach (var msg in erro.Value)
+                                    WriteLine(msg);
+                                horaInicial = LerString("Hora Inicial: ");
+                                break;
+                            case "horaFinal":
+                                foreach (var msg in erro.Value)
+                                    WriteLine(msg);
+                                horaFinal = LerString("Hora Final: ");
+                                break;
+                            case "Erro-futuro":
+                                foreach (var msg in erro.Value)
+                                    WriteLine(msg);
+                                data = LerString("Data da consulta: ");
+                                if(!temErroHoraInicial)
+                                    horaInicial = LerString("Hora Inicial: ");
+                            break;
+                            }
+                    }
+                    
+
+                } catch (Exception e)
+                {
+                    WriteLine(e.Message);
+                    LerCPF(out cpf, true);
+                    data = LerString("Data da consulta: ");
+                    horaInicial = LerString("Hora Inicial: ");
+                    horaFinal = LerString("Hora Final: ");
                 }
 
-                horaInicial = DateTime.ParseExact(horaI, "HHmm", CultureInfo.InvariantCulture);
-
-
-                if(horaInicial < aberturaConsultorio || horaInicial > encerramentoConsultorio.AddMinutes(-15))
-                {
-                    WriteLine("Erro: Hora inicial fora do horário de atendimento");
-                    continue;
-                }
-
-                break;
             } while (true);
 
-            do
-            {
-                Write("Hora final: ");
-                string horaF = ReadLine() ?? "";
-                horaF.Trim();
 
-                Match m = Regex.Match(horaF, @"^(([0-1]?[0-9])|2[0-3])(00|15|30|45)$");
-
-                if (!m.Success)
-                {
-                    WriteLine("Erro: Hora não corresponde ao formato HHmm ou não respeita o intervalo de 15 minutos");
-                    continue;
-                }
-
-                horaFinal = DateTime.ParseExact(horaF, "HHmm", CultureInfo.InvariantCulture);
-
-                if(horaFinal < horaInicial)
-                {
-                    WriteLine("Erro: Hora Final não pode ser menor do que a hora inicial");
-                    continue;
-                }
-
-                if (horaFinal > encerramentoConsultorio)
-                {
-                    WriteLine("Erro: Hora final fora do horário de atendimento");
-                    continue;
-                }
-
-
-
-
-                break;
-            } while (true);
-
-            dataConsulta = dataConsulta.AddHours(horaInicial.Hour).AddMinutes(horaInicial.Minute);
-
-            if(dataConsulta < DateTime.Now)
-            {
-                WriteLine("A data da consulta precisa estar no futuro.");
-                Agendar();
-            }
-
-            try
-            {
-                Paciente p = ControladoraP.PegarPaciente(cpf);
-                ControladoraConsulta.CadastrarConsulta(new Consulta(p, dataConsulta, horaInicial, horaFinal));
-            }catch(Exception e)
-            {
-                WriteLine(e.Message);
-                Agendar();
-            }
 
         }
+
+       
 
         private void CancelarAgendamento()
         {
@@ -298,6 +233,72 @@ namespace ConsultorioOdontologico
 
         private void ListarAgenda()
         {
+            string dataInicio, dataFim, opcao;
+            IReadOnlyCollection<Consulta> listaConsultas;
+            List<string> listaDatasPercorridas = new List<string>();
+
+            opcao = LerString("Apresentar a agenda T-Toda ou P-Periodo: ");
+            if(opcao == "P")
+            {
+                do
+                {
+                    dataInicio = LerString("Data inicial: ");
+                    Match m = Regex.Match(dataInicio, @"^([0][1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/([0-9]{4})$");
+                    if (m.Success)
+                    {
+                        break;
+                    }
+
+                    WriteLine("A data inicial precisa estar no formato dd/MM/yyyy");
+
+                } while (true);
+
+                do
+                {
+                    dataFim = LerString("Data final: ");
+                    Match m = Regex.Match(dataFim, @"^([0][1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/([0-9]{4})$");
+                    if (m.Success)
+                    {
+                        break;
+                    }
+
+                    WriteLine("A data final precisa estar no formato dd/MM/yyyy");
+
+                } while (true);
+
+                listaConsultas = ControladoraConsulta.PegarConsultasPorPeriodo(dataInicio, dataFim);
+
+            }
+            else
+            {
+                listaConsultas = ControladoraConsulta.PegarConsultas();
+            }
+
+            WriteLine("");
+            WriteLine("");
+            WriteLine("-------------------------------------------------------------");
+            WriteLine("   Data    H.Ini H.Fim Tempo Nome                     Dt.Nasc. ");
+            WriteLine("-------------------------------------------------------------");
+            foreach (var consulta in listaConsultas)
+            {
+                string data = consulta.DataConsulta.ToShortDateString();
+
+                if (listaDatasPercorridas.Contains(data))
+                {
+                    data = "".PadLeft(data.Length);
+                }
+                else
+                {
+                    listaDatasPercorridas.Add(data);
+                }
+
+                WriteLine($"{data} {consulta.HoraInicial.ToShortTimeString()} " +
+                    $"{consulta.HoraFinal.ToShortTimeString()} {(consulta.HoraFinal - consulta.HoraInicial).ToString().Substring(0,5)} " +
+                    $"{consulta.Paciente.Nome.PadRight(23)} {consulta.Paciente.DataNascimento.ToShortDateString()}");
+
+            }
+            WriteLine("-------------------------------------------------------------");
+            WriteLine("");
 
         }
 
@@ -307,17 +308,11 @@ namespace ConsultorioOdontologico
             {
                 Write("CPF: ");
                 cpf = ReadLine() ?? "";
-                cpf.Trim();
-
-                if (!cpf.ehValido())
-                {
-                    WriteLine("Erro: CPF Inválido.");
-                    continue;
-                }
+                cpf = cpf.Trim();
 
                 try
                 {
-                    ControladoraP.VerificaCPF(cpf,cpfDeveExistir);
+                    ControladoraP.VerificaCPF(cpf, cpfDeveExistir);
                 }
                 catch (Exception ex)
                 {
@@ -331,8 +326,16 @@ namespace ConsultorioOdontologico
             } while (true);
         }
 
+        private string LerString(string mensagemConsole)
+        {
+            Write(mensagemConsole);
+            string str = ReadLine() ?? "";
+            return str.Trim();
+        }
+
 
     }
+
 
 
 }
