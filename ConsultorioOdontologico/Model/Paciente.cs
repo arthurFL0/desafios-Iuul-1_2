@@ -14,6 +14,8 @@ namespace ConsultorioOdontologico.Model
 
         public List<Consulta> Consultas { get; }
 
+        public Consulta? ConsultaFutura { get;  set; }
+
         public Paciente(string cpf, string nome, string data)
         {
             CPF = cpf;
@@ -21,6 +23,13 @@ namespace ConsultorioOdontologico.Model
             this.DataNaoValidada = data;
 
             Consultas = new List<Consulta>();
+        }
+
+        public void AtualizarConsulta()
+        {
+            if (ConsultaFutura != null && DateTime.Now > ConsultaFutura.DataConsulta)
+                ConsultaFutura = null;
+
         }
 
         public void AdicionarConsulta(Consulta c)

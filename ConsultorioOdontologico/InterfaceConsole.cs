@@ -1,5 +1,6 @@
 ﻿using ConsultorioOdontologico.Controladores;
 using ConsultorioOdontologico.Model;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using static System.Console;
 
@@ -61,7 +62,7 @@ namespace ConsultorioOdontologico
                 {
                     do
                     {
-                        WriteLine("Agendar");
+                        WriteLine("Agenda");
                         WriteLine("1-Agendar Consulta\n2-Cancelar Agendamento" +
                             "\n3-Listar Agenda \n4-Voltar ao menu Principal");
 
@@ -149,7 +150,33 @@ namespace ConsultorioOdontologico
 
         private void ListarPacientes(string ordenacao)
         {
+            IReadOnlyCollection<Paciente> listaPacientes = ControladoraP.PegarPacientes(ordenacao);
+            int idade;
+            WriteLine("-------------------------------------------------------------");
+            WriteLine("CPF         Nome                               Dt.Nasc. Idade");
+            WriteLine("-------------------------------------------------------------");
 
+            foreach (var paciente in listaPacientes)
+            {
+                paciente.AtualizarConsulta();
+                idade = DateTime.Now.Year - paciente.DataNascimento.Year;
+                if(DateTime.Now < paciente.DataNascimento.AddYears(idade))
+                {
+                    idade--;
+                } 
+
+                WriteLine($"{paciente.CPF} {paciente.Nome.PadRight(33)} {paciente.DataNascimento.ToShortDateString()}   {idade}");
+                if(paciente.ConsultaFutura != null)
+                {
+                    int t = paciente.CPF.Length;
+                    
+                       WriteLine("".PadRight(t)+$" Agendado para: {paciente.ConsultaFutura.DataConsulta.ToShortDateString()}");
+                       WriteLine("".PadRight(t)+$" {paciente.ConsultaFutura.HoraInicial.ToShortTimeString()} às {paciente.ConsultaFutura.HoraFinal.ToShortTimeString()}");
+                    
+                }
+            }
+            WriteLine("-------------------------------------------------------------");
+            WriteLine("");
         }
 
         
@@ -228,6 +255,37 @@ namespace ConsultorioOdontologico
 
         private void CancelarAgendamento()
         {
+            string data, hora, cpf;
+           
+
+            LerCPF(out cpf, true);
+            data = LerData("Data da consulta");
+
+            do
+            {
+                Write("Hora Inicial: ");
+                hora = ReadLine() ?? "";
+                hora = hora.Trim();
+
+                Match m = Regex.Match(hora, @"^([0-1]+[0-9]|2[0-3])(00|15|30|45)$");
+                if (m.Success)
+                {
+                    break;
+                }
+
+                WriteLine($"Erro: Hora Inicial não corresponde ao formato HHmm ou não respeita o intervalo de 15 minutos");
+
+            } while (true);
+
+            try
+            {
+                ControladoraConsulta.CancelarConsulta(cpf,DateTime.Parse(data),DateTime.ParseExact(hora, "HHmm", CultureInfo.InvariantCulture));
+                WriteLine("Agendamento cancelado com sucesso");
+            }catch(Exception e)
+            {
+                WriteLine(e.Message);
+            }
+
 
         }
 
@@ -240,31 +298,8 @@ namespace ConsultorioOdontologico
             opcao = LerString("Apresentar a agenda T-Toda ou P-Periodo: ");
             if(opcao == "P")
             {
-                do
-                {
-                    dataInicio = LerString("Data inicial: ");
-                    Match m = Regex.Match(dataInicio, @"^([0][1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/([0-9]{4})$");
-                    if (m.Success)
-                    {
-                        break;
-                    }
-
-                    WriteLine("A data inicial precisa estar no formato dd/MM/yyyy");
-
-                } while (true);
-
-                do
-                {
-                    dataFim = LerString("Data final: ");
-                    Match m = Regex.Match(dataFim, @"^([0][1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/([0-9]{4})$");
-                    if (m.Success)
-                    {
-                        break;
-                    }
-
-                    WriteLine("A data final precisa estar no formato dd/MM/yyyy");
-
-                } while (true);
+                dataInicio = LerData("Data inicial");
+                dataFim = LerData("Data final");
 
                 listaConsultas = ControladoraConsulta.PegarConsultasPorPeriodo(dataInicio, dataFim);
 
@@ -277,7 +312,7 @@ namespace ConsultorioOdontologico
             WriteLine("");
             WriteLine("");
             WriteLine("-------------------------------------------------------------");
-            WriteLine("   Data    H.Ini H.Fim Tempo Nome                     Dt.Nasc. ");
+            WriteLine("   Data    H.Ini H.Fim Tempo Nome                  Dt.Nasc.");
             WriteLine("-------------------------------------------------------------");
             foreach (var consulta in listaConsultas)
             {
@@ -294,7 +329,7 @@ namespace ConsultorioOdontologico
 
                 WriteLine($"{data} {consulta.HoraInicial.ToShortTimeString()} " +
                     $"{consulta.HoraFinal.ToShortTimeString()} {(consulta.HoraFinal - consulta.HoraInicial).ToString().Substring(0,5)} " +
-                    $"{consulta.Paciente.Nome.PadRight(23)} {consulta.Paciente.DataNascimento.ToShortDateString()}");
+                    $"{consulta.Paciente.Nome.PadRight(20)} {consulta.Paciente.DataNascimento.ToShortDateString()}");
 
             }
             WriteLine("-------------------------------------------------------------");
@@ -331,6 +366,27 @@ namespace ConsultorioOdontologico
             Write(mensagemConsole);
             string str = ReadLine() ?? "";
             return str.Trim();
+        }
+
+        private string LerData(string tipoData) {
+            string data;
+            do
+            {
+                Write(tipoData+": ");
+                data = ReadLine() ?? "";
+                data = data.Trim();
+
+                Match m = Regex.Match(data, @"^([0][1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/([0-9]{4})$");
+                if (m.Success)
+                {
+                    break;
+                }
+
+                WriteLine($"Erro: A {tipoData} precisa estar no formato dd/MM/yyyy");
+
+            } while (true);
+
+            return data;
         }
 
 

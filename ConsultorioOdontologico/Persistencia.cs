@@ -26,6 +26,8 @@ namespace ConsultorioOdontologico
             listaConsultasFoiModificada = false;
         }
 
+ 
+
         public bool SalvarPaciente(Paciente p)
         {
             if (CpfNaoExiste(p)) { 
@@ -49,6 +51,7 @@ namespace ConsultorioOdontologico
 
         public bool SalvarConsulta(Consulta c) {
             Paciente? pSalvo = pacientes.Find((p) => p.Equals(c.Paciente));
+         
 
             if (pSalvo == null)
             {
@@ -60,7 +63,14 @@ namespace ConsultorioOdontologico
                 throw new ConsultaSobrepostaException();
             }
 
+            pSalvo.AtualizarConsulta();
+            if(pSalvo.ConsultaFutura != null)
+            {
+                throw new ConsultaFuturaException();
+            }
+
             pSalvo.Consultas.Add(c);
+            pSalvo.ConsultaFutura = c;
             consultas.Add(c);
             listaConsultasFoiModificada = true;
 
@@ -93,6 +103,7 @@ namespace ConsultorioOdontologico
 
         }
 
+       
         public Paciente PegarPaciente(string cpf)
         {
             Paciente? pSalvo = pacientes.Find((p) => p.CPF == cpf);
@@ -101,5 +112,36 @@ namespace ConsultorioOdontologico
 
             return pSalvo;
         }
+
+        public IReadOnlyCollection<Paciente> PegarPacientes(string ordenacao)
+        {
+            List<Paciente> listaPacientes = pacientes;
+
+            if(ordenacao == "cpf")
+            {
+                listaPacientes.Sort((p, p2) => p.CPF.CompareTo(p2.CPF));
+            }else if(ordenacao == "nome")
+            {
+                listaPacientes.Sort((p, p2) => p.Nome.CompareTo(p2.Nome));
+            }
+
+            return listaPacientes.AsReadOnly();
+        }
+
+        public void CancelarConsulta(string cpf, DateTime dataConsulta, DateTime horaInicial)
+        {
+            Paciente? pSalvo = pacientes.Find((p) => p.CPF == cpf);
+            if (pSalvo == null)
+                throw new PacienteNaoExisteException();
+            Consulta? c = pSalvo.ConsultaFutura;
+            if (c == null || c.DataConsulta != dataConsulta.AddHours(horaInicial.Hour).AddMinutes(horaInicial.Minute))
+                throw new ConsultaNaoEncontrada();
+
+            pSalvo.ConsultaFutura = null;
+            int i = consultas.FindIndex((c) => c.Paciente.CPF == cpf && c.DataConsulta == dataConsulta.AddHours(horaInicial.Hour).AddMinutes(horaInicial.Minute));
+            consultas.RemoveAt(i);
+
+        }
     }
+
 }

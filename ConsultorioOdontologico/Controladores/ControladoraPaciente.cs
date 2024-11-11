@@ -34,5 +34,10 @@ namespace ConsultorioOdontologico.Controladores
             return persistencia.PegarPaciente(cpf);
         }
 
+        public IReadOnlyCollection<Paciente> PegarPacientes(string ordenacao)
+        {
+            return persistencia.PegarPacientes(ordenacao);
+        }
+
     }
 }

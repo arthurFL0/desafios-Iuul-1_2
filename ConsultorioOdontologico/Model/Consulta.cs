@@ -13,6 +13,7 @@ namespace ConsultorioOdontologico.Model
 
         public DateTime HoraFinal { get; private set; }
 
+
         public string DataNaoValidada { get; }
         public string HoraInicialNaoValidada {  get; }
         public string HoraFinalNaoValidada { get; }
@@ -27,6 +28,7 @@ namespace ConsultorioOdontologico.Model
             HoraFinalNaoValidada = horaFinal;
         }
 
+       
         public bool Equals(Consulta? other)
         {
             return other is not null && DataConsulta.Date == other.DataConsulta.Date
@@ -77,7 +79,7 @@ namespace ConsultorioOdontologico.Model
             try
             {
                 HoraInicial = DateTime.ParseExact(HoraInicialNaoValidada, "HHmm", CultureInfo.InvariantCulture);
-                Match m2 = Regex.Match(HoraInicialNaoValidada, @"^(([0-1]?[0-9])|2[0-3])(00|15|30|45)$");
+                Match m2 = Regex.Match(HoraInicialNaoValidada, @"^([0-1]+[0-9]|2[0-3])(00|15|30|45)$");
                 if (!m2.Success)
                 {
                     listaErros.Add("horaInicial", new List<string> { "Erro: Hora Inicial não corresponde ao formato HHmm ou não respeita o intervalo de 15 minutos" });
@@ -107,7 +109,7 @@ namespace ConsultorioOdontologico.Model
             try
             {
                 HoraFinal = DateTime.ParseExact(HoraFinalNaoValidada, "HHmm", CultureInfo.InvariantCulture);
-                Match m3 = Regex.Match(HoraFinalNaoValidada, @"^(([0-1]?[0-9])|2[0-3])(00|15|30|45)$");
+                Match m3 = Regex.Match(HoraFinalNaoValidada, @"^([0-1]+[0-9]|2[0-3])(00|15|30|45)$");
                 if (!m3.Success)
                 {
                     listaErros.Add("horaFinal", new List<string> { "Erro: Hora Final não corresponde ao formato HHmm ou não respeita o intervalo de 15 minutos" });

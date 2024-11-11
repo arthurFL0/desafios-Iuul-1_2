@@ -23,6 +23,11 @@ namespace ConsultorioOdontologico.Controladores
             
         }
 
+        public void CancelarConsulta(string cpf, DateTime dataConsulta, DateTime horaInicial)
+        {
+            persistencia.CancelarConsulta(cpf,dataConsulta,horaInicial);
+        }
+
         public IReadOnlyCollection<Consulta> PegarConsultas()
         {
             return persistencia.PegarConsultas();
