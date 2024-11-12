@@ -1,5 +1,6 @@
 ﻿using ConsultorioOdontologico.Excecoes;
 using ConsultorioOdontologico.Model;
+using System.Runtime.CompilerServices;
 
 namespace ConsultorioOdontologico
 {
@@ -38,6 +39,21 @@ namespace ConsultorioOdontologico
 
             return false;
         }
+
+        public void ExcluirPaciente(string cpf)
+        {
+            Paciente p = PegarPaciente(cpf);
+            p.AtualizarConsulta();
+            if(p.ConsultaFutura != null)
+            {
+                throw new ExcluirPacienteException();
+
+            }
+
+            consultas.RemoveAll(c => p.Consultas.Contains(c));
+            pacientes.Remove(p);
+        }
+
 
         public bool CpfNaoExiste(Paciente p) { 
             

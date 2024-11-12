@@ -145,7 +145,16 @@ namespace ConsultorioOdontologico
 
         private void ExcluirPaciente()
         {
-
+            string cpf;
+            LerCPF(out cpf, true);
+            try
+            {
+                ControladoraP.ExcluirPaciente(cpf);
+                WriteLine("Paciente excluído com sucesso!");
+            }catch(Exception e)
+            {
+                WriteLine(e.Message);
+            }
         }
 
         private void ListarPacientes(string ordenacao)

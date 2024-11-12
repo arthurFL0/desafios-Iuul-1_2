@@ -39,5 +39,10 @@ namespace ConsultorioOdontologico.Controladores
             return persistencia.PegarPacientes(ordenacao);
         }
 
+        public void ExcluirPaciente(string cpf)
+        {
+            persistencia.ExcluirPaciente(cpf);
+        }
+
     }
 }
